@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Contact Book</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 30px; max-width: 600px; }
+    h1 { color: #2c3e50; }
+    input, button { padding: 6px; margin-top: 6px; }
+    .contact { border: 1px solid #ddd; padding: 6px; margin-top: 6px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Contact Book</h1>
+
+  <h2>Add Contact</h2>
+  <input type="text" id="name" placeholder="Name" />
+  <input type="text" id="phone" placeholder="Phone" />
+  <button onclick="addContact()">Add</button>
+
+  <h2>Search Contacts</h2>
+  <input type="text" id="search" placeholder="Search by name or phone" oninput="searchContacts()" />
+
+  <h2>Contacts List</h2>
+  <div id="contacts"></div>
+
+<script>
+async function fetchContacts(query="") {
+  const res = await fetch("/api/contacts" + (query ? "?search=" + query : ""));
+  return await res.json();
+}
+
+async function displayContacts(query="") {
+  const contacts = await fetchContacts(query);
+  const div = document.getElementById("contacts");
+  div.innerHTML = contacts.length ? contacts.map(c => `<div class="contact">${c.name} - ${c.phone}</div>`).join('') : "No contacts found";
+}
+
+async function addContact() {
+  const name = document.getElementById("name").value;
+  const phone = document.getElementById("phone").value;
+
+  if(!name || !phone){
+    alert("Name and Phone are required");
+    return;
+  }
+
+  const res = await fetch("/api/contacts", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({name, phone})
+  });
+  const data = await res.json();
+  if(data.error){
+    alert(data.error);
+  } else {
+    document.getElementById("name").value = "";
+    document.getElementById("phone").value = "";
+    displayContacts();
+  }
+}
+
+function searchContacts(){
+  const query = document.getElementById("search").value;
+  displayContacts(query);
+}
+
+// Initial load
+displayContacts();
+</script>
+</body>
+</html>
